@@ -11,18 +11,14 @@ ENV_FILE="${ENV_FILE:-$ROOT_DIR/.env}"
 RUN_DIR="$APP_HOME/run"
 LOG_DIR="$APP_HOME/logs"
 APP_PID_FILE="$RUN_DIR/app.pid"
-XHS_PID_FILE="$RUN_DIR/xhs-sign.pid"
 APP_LOG="$LOG_DIR/app.log"
-XHS_LOG="$LOG_DIR/xhs-sign.log"
 
 JAVA_MIN=21
 # 宝塔 JDK 21 默认路径（.env 中 JAVA_BIN 可覆盖）
 BT_JAVA_DEFAULT="/www/server/java/jdk-21.0.2/bin/java"
 BACKEND_PORT="${BACKEND_PORT:-8080}"
-XHS_SIGN_PORT="${XHS_SIGN_PORT:-8765}"
 JAVA_OPTS="${JAVA_OPTS:--Xms512m -Xmx1024m -XX:+UseG1GC}"
 MVN="${MVN:-mvn}"
-PYTHON="${PYTHON:-python3}"
 
 mkdir -p "$RUN_DIR" "$LOG_DIR"
 
@@ -34,15 +30,15 @@ TourismRAG 后端管理脚本
 
 用法: $0 {start|stop|restart|redeploy|status}
 
-  start     启动 Java 后端（XHS_ENABLED=true 时同时启动签名服务）
-  stop      停止后端与签名服务
+  start     启动 Java 后端（小红书签名服务请独立管理，本脚本不启停）
+  stop      停止 Java 后端
   restart   先 stop 再 start
   redeploy  mvn 打包后 restart（需已安装 Maven）
   status    查看运行状态
 
 环境:
   .env 文件默认: $ENV_FILE
-  可在 .env 中设置 JAVA_BIN、JAVA_OPTS、BACKEND_PORT、XHS_SIGN_PORT、MVN、PYTHON
+  可在 .env 中设置 JAVA_BIN、JAVA_OPTS、BACKEND_PORT、MVN
 EOF
 }
 
@@ -56,7 +52,6 @@ load_env() {
     echo "警告: 未找到 $ENV_FILE，将使用默认配置" >&2
   fi
   BACKEND_PORT="${BACKEND_PORT:-8080}"
-  XHS_SIGN_PORT="${XHS_SIGN_PORT:-8765}"
   JAVA_OPTS="${JAVA_OPTS:--Xms512m -Xmx1024m -XX:+UseG1GC}"
 }
 
@@ -122,25 +117,6 @@ stop_pid_file() {
   rm -f "$pid_file"
 }
 
-start_xhs_sign() {
-  if [[ "${XHS_ENABLED:-false}" != "true" ]]; then
-    return 0
-  fi
-  if is_running "$XHS_PID_FILE"; then
-    echo ">>> 小红书签名服务已在运行 (pid=$(cat "$XHS_PID_FILE"))"
-    return 0
-  fi
-  if ! "$PYTHON" -c "from xhshow import Xhshow" 2>/dev/null; then
-    die "XHS_ENABLED=true 但未安装 xhshow，请执行: pip install -r $APP_HOME/scripts/requirements.txt"
-  fi
-  echo ">>> 启动小红书签名服务 http://127.0.0.1:$XHS_SIGN_PORT/sign"
-  cd "$APP_HOME"
-  nohup env XHS_SIGN_PORT="$XHS_SIGN_PORT" "$PYTHON" scripts/xhs_sign_server.py >>"$XHS_LOG" 2>&1 &
-  echo $! >"$XHS_PID_FILE"
-  sleep 0.8
-  is_running "$XHS_PID_FILE" || die "签名服务启动失败，查看日志: $XHS_LOG"
-}
-
 start_app() {
   load_env
   local java_bin jar
@@ -150,8 +126,6 @@ start_app() {
     echo ">>> 后端已在运行 (pid=$(cat "$APP_PID_FILE"))"
     return 0
   fi
-
-  start_xhs_sign
 
   jar="$(find_jar)"
   echo ">>> 启动后端 $jar"
@@ -182,7 +156,6 @@ start_app() {
 
 stop_app() {
   stop_pid_file "Java 后端" "$APP_PID_FILE"
-  stop_pid_file "小红书签名服务" "$XHS_PID_FILE"
 }
 
 status_app() {
@@ -195,14 +168,9 @@ status_app() {
   else
     echo "Java 后端: 已停止"
   fi
-  if [[ "${XHS_ENABLED:-false}" == "true" ]]; then
-    if is_running "$XHS_PID_FILE"; then
-      echo "XHS 签名: 运行中 (pid=$(cat "$XHS_PID_FILE"), port=$XHS_SIGN_PORT)"
-    else
-      echo "XHS 签名: 已停止"
-    fi
-  else
-    echo "XHS 签名: 未启用 (XHS_ENABLED=false)"
+  echo "XHS 签名: 独立管理（Supervisor 等），本脚本不启停"
+  if [[ -n "${XHS_SIGN_URL:-}" ]]; then
+    echo "XHS_SIGN_URL: $XHS_SIGN_URL"
   fi
   if curl -sf "http://127.0.0.1:$BACKEND_PORT/api/cities" >/dev/null 2>&1; then
     echo "健康检查: OK  /api/cities"
