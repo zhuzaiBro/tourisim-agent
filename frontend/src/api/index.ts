@@ -1,12 +1,13 @@
 import axios from 'axios'
 import type { ChatRequest, ChatResponse, City, AuthResponse, User } from '@/types'
 import { ElMessage } from 'element-plus'
+import { apiUrl } from '@/utils/apiBase'
 
 // ============================================================
 // Axios 实例配置
 // ============================================================
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: apiUrl('/api'),
   timeout: 120000,
   headers: {
     'Content-Type': 'application/json',
@@ -153,7 +154,7 @@ export const chatApi = {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' }
     if (token) headers['Authorization'] = `Bearer ${token}`
 
-    const response = await fetch('/api/chat/stream', {
+    const response = await fetch(apiUrl('/api/chat/stream'), {
       method: 'POST',
       headers,
       body: JSON.stringify({ ...request, stream: true }),

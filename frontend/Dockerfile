@@ -7,7 +7,7 @@ FROM node:20-slim AS builder
 WORKDIR /app
 
 # 接受构建时环境变量（Vite 仅打包 VITE_ 前缀变量）
-ARG VITE_API_BASE_URL=http://localhost:8080
+ARG VITE_API_BASE_URL=https://tourisim-api.zood.work
 ARG VITE_AMAP_KEY=
 ARG VITE_AMAP_SECURITY_CODE=
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL

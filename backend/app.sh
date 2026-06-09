@@ -18,7 +18,6 @@ JAVA_MIN=21
 BT_JAVA_DEFAULT="/www/server/java/jdk-21.0.2/bin/java"
 BACKEND_PORT="${BACKEND_PORT:-8080}"
 JAVA_OPTS="${JAVA_OPTS:--Xms512m -Xmx1024m -XX:+UseG1GC}"
-MVN="${MVN:-mvn}"
 
 mkdir -p "$RUN_DIR" "$LOG_DIR"
 
@@ -33,12 +32,12 @@ TourismRAG 后端管理脚本
   start     启动 Java 后端（小红书签名服务请独立管理，本脚本不启停）
   stop      停止 Java 后端
   restart   先 stop 再 start
-  redeploy  mvn 打包后 restart（需已安装 Maven）
+  redeploy  打包并 restart；无 Maven 时可设 DEPLOY_SKIP_BUILD=true 仅重启 jar
   status    查看运行状态
 
 环境:
   .env 文件默认: $ENV_FILE
-  可在 .env 中设置 JAVA_BIN、JAVA_OPTS、BACKEND_PORT、MVN
+  可在 .env 中设置 JAVA_BIN、JAVA_OPTS、BACKEND_PORT、MVN、DEPLOY_SKIP_BUILD
 EOF
 }
 
@@ -76,6 +75,37 @@ export_java_home() {
   local java_bin="$1"
   export JAVA_HOME="${JAVA_HOME:-$(cd "$(dirname "$java_bin")/.." && pwd)}"
   export PATH="$JAVA_HOME/bin:$PATH"
+}
+
+resolve_mvn() {
+  local candidate
+  if [[ -n "${MVN:-}" ]]; then
+    if [[ -x "$MVN" ]] || command -v "$MVN" >/dev/null 2>&1; then
+      echo "$MVN"
+      return 0
+    fi
+    die "MVN 指向的路径不可用: $MVN"
+  fi
+  local candidates=(
+    /www/server/maven/bin/mvn
+    /www/server/apache-maven/bin/mvn
+    /usr/local/maven/bin/mvn
+    /opt/maven/bin/mvn
+    mvn
+  )
+  for candidate in "${candidates[@]}"; do
+    if [[ -x "$candidate" ]] || command -v "$candidate" >/dev/null 2>&1; then
+      echo "$candidate"
+      return 0
+    fi
+  done
+  return 1
+}
+
+jar_exists() {
+  local jar
+  jar="$(ls -t "$APP_HOME"/target/tourism-rag-*.jar 2>/dev/null | grep -v '\.original$' | head -1 || true)"
+  [[ -n "$jar" && -f "$jar" ]]
 }
 
 find_jar() {
@@ -181,18 +211,37 @@ status_app() {
 
 redeploy_app() {
   load_env
-  local java_bin
+  local java_bin mvn_bin jar
   java_bin="$(resolve_java)"
   export_java_home "$java_bin"
-  command -v "$MVN" >/dev/null 2>&1 || die "未找到 Maven ($MVN)，请先安装或在 .env 设置 MVN 路径"
 
-  echo ">>> 编译打包 (跳过测试, JAVA_HOME=$JAVA_HOME)..."
-  cd "$APP_HOME"
-  "$MVN" clean package -DskipTests
+  if mvn_bin="$(resolve_mvn 2>/dev/null)"; then
+    echo ">>> 编译打包 (跳过测试, JAVA_HOME=$JAVA_HOME, MVN=$mvn_bin)..."
+    cd "$APP_HOME"
+    "$mvn_bin" clean package -DskipTests
+    jar="$(find_jar)"
+    echo ">>> 打包完成: $jar"
+  elif [[ "${DEPLOY_SKIP_BUILD:-false}" == "true" ]]; then
+    jar_exists || die "DEPLOY_SKIP_BUILD=true 但未找到 target/tourism-rag-*.jar，请先在本地打包并上传"
+    jar="$(find_jar)"
+    echo ">>> 跳过编译 (DEPLOY_SKIP_BUILD=true)，使用已有 jar: $jar"
+  else
+    die "$(cat <<EOF
+未找到 Maven。宝塔服务器通常不预装 Maven，可选方案:
 
-  local jar
-  jar="$(find_jar)"
-  echo ">>> 打包完成: $jar"
+  方案 A（推荐）本地打包后上传 jar，在 .env 增加:
+    DEPLOY_SKIP_BUILD=true
+  然后执行: $0 redeploy  或  $0 restart
+
+  方案 B 服务器安装 Maven 后在 .env 设置:
+    MVN=/path/to/mvn/bin/mvn
+
+  方案 C 仅重启已有 jar（不上传新包）:
+    $0 restart
+EOF
+)"
+  fi
+
   stop_app
   start_app
 }

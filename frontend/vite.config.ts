@@ -20,7 +20,8 @@ export default defineConfig({
     proxy: {
       // 开发环境代理到后端
       '/api': {
-        target: process.env.VITE_API_BASE_URL || 'http://localhost:8080',
+        // 仅开发时代理到本地后端；生产由 VITE_API_BASE_URL 直连
+        target: process.env.VITE_DEV_PROXY_TARGET || 'http://localhost:8080',
         changeOrigin: true,
         // 如果后端 API 不含 /api 前缀，取消注释下一行
         // rewrite: (path) => path.replace(/^\/api/, '')

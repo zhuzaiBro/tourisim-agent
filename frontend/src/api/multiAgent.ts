@@ -3,12 +3,13 @@ import type {
   AgentInfo,
   MultiAgentRequest,
 } from '@/types/multiAgent'
+import { apiUrl } from '@/utils/apiBase'
 
 // Reuse the same ItineraryResponse from agent.ts
 import type { ItineraryResponse } from './agent'
 
 const api = axios.create({
-  baseURL: '/api/multi-agent',
+  baseURL: apiUrl('/api/multi-agent'),
   timeout: 180000, // 3 min for full orchestration
   headers: { 'Content-Type': 'application/json' },
 })
@@ -48,7 +49,7 @@ export async function* streamMultiAgentItinerary(
 ): AsyncGenerator<{ type: string; data: any }> {
   const token = localStorage.getItem('voyage_token')
 
-  const response = await fetch('/api/multi-agent/itinerary/stream', {
+  const response = await fetch(apiUrl('/api/multi-agent/itinerary/stream'), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
