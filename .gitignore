@@ -1,0 +1,18 @@
+# env
+.env
+*.env
+
+# frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.nuxt/
+frontend/.output/
+
+# backend
+backend/target/
+
+# common
+node_modules/
+dist/
+build/
+.DS_Store

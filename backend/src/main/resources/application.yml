@@ -1,0 +1,225 @@
+server:
+  port: 8080
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+
+spring:
+  application:
+    name: tourism-rag
+
+  # ============================================
+  # MySQL 数据源配置
+  # ============================================
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/tourism_rag?useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai}
+    username: ${SPRING_DATASOURCE_USERNAME:tourism}
+    password: ${SPRING_DATASOURCE_PASSWORD:tourism_pass_2024}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  jpa:
+    hibernate:
+      ddl-auto: update   # 生产环境改为 validate，用 Flyway 管理 schema
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: true
+    open-in-view: false
+
+  mvc:
+    async:
+      request-timeout: 120000  # 120秒，支持长时间的 LLM 响应
+
+# ============================================
+# LangChain4j 配置
+# ============================================
+langchain4j:
+  # ---- 阿里 DashScope (Qwen) ----
+  # 文档：https://help.aliyun.com/zh/dashscope/
+  dashscope:
+    api-key: ${DASHSCOPE_API_KEY:your-dashscope-api-key-here}
+
+    # 对话模型配置
+    chat-model:
+      model-name: qwen-turbo
+      max-tokens: 2048
+      temperature: 0.7              # 旅游推荐适当提高创意性
+      top-p: 0.9
+      enable-search: false          # 不用内置搜索，依赖我们自己的 RAG
+
+    # 流式对话模型（SSE）
+    streaming-chat-model:
+      model-name: qwen-turbo
+      max-tokens: 2048
+      temperature: 0.7
+
+    # Embedding 模型（中文强效）
+    # text-embedding-v3 支持 1024 维，BGE 兼容
+    embedding-model:
+      model-name: text-embedding-v3  # 1024维，中文效果优异
+      dimension: 1024
+
+# ============================================
+# Milvus 向量数据库配置
+# ============================================
+milvus:
+  host: ${MILVUS_HOST:localhost}
+  port: ${MILVUS_PORT:19530}
+  fail-fast: ${MILVUS_FAIL_FAST:true}
+  # 集合配置
+  collection-name: tourism_knowledge_v2
+  dimension: 1024              # 必须与 embedding 维度一致
+  index-type: FLAT             # 开发调试优先稳定，避免索引加载失败
+  metric-type: COSINE          # 余弦相似度（中文语义检索推荐）
+  nlist: 1024                  # IVF 分区数（数据量大时调高）
+
+# ============================================
+# RAG 检索配置
+# ============================================
+rag:
+  retrieval:
+    top-k: 8                   # 检索 Top-K 文档块（旅游场景适当提高）
+    min-score: 0.5             # 最低相似度阈值，过滤无关内容
+    chunk-size: 700            # 文档分块大小（字符数）
+    chunk-overlap: 150         # 块重叠量，保证上下文连贯
+  # 系统提示词（防幻觉 grounding 指令）
+  system-prompt: |
+    你是专业的旅游智能助手，服务范围覆盖中国多个城市。
+
+    核心规则：
+    1. 【严格基于检索内容回答】：只能基于提供的参考资料回答，不得凭空编造景点、价格、开放时间等信息。
+    2. 【来源引用】：回答时必须标注信息来源，格式为【来源：{source}】。
+    3. 【城市精准性】：如果问题指定了城市，只提供该城市的信息。
+    4. 【不确定性声明】：若检索内容不足以回答，直接告知用户"暂无相关数据"，不要猜测。
+    5. 【行程规划】：规划行程时，结合用户的偏好（亲子/情侣/美食/摄影等）给出个性化建议。
+    6. 【语言风格】：友好、专业、实用，适当加入当地特色描述增加吸引力。
+
+# ============================================
+# 应用安全配置
+# ============================================
+app:
+  jwt:
+    # 生产环境请使用环境变量覆盖，至少 32 个字符
+    secret: ${JWT_SECRET:voyage-tourism-rag-super-secret-key-2024-change-in-prod}
+    expiration-ms: ${JWT_EXPIRATION_MS:604800000}  # 7天
+  admin:
+    # 首次初始化管理员账号时需要提供此密钥（生产环境务必通过环境变量设置）
+    setup-key: ${ADMIN_SETUP_KEY:voyage-admin-init-2024}
+
+# ============================================
+# 智能行程 Agent 配置
+# ============================================
+agent:
+  enabled: ${AGENT_ENABLED:true}
+  timeout-ms: ${AGENT_TIMEOUT_MS:45000}       # 天气/POI 并行调用超时（ms，含 XHS 搜索）
+  max-steps: ${AGENT_MAX_STEPS:10}             # 最大编排步数
+  max-days: 7                                  # 最大行程天数
+
+  map:
+    gaode:
+      api-key: ${MAP_API_KEY:}                 # 高德地图 API Key（空=自动 Mock）
+
+  poi:
+    fallback-order: ${AGENT_POI_FALLBACK_ORDER:gaode,rag,xhs}
+    rag-enabled: ${AGENT_POI_RAG_ENABLED:true}
+
+  # 小红书攻略搜索（推荐 cookie 模式：浏览器复制 Cookie）
+  xhs:
+    enabled: ${XHS_ENABLED:false}
+    mode: ${XHS_MODE:cookie}                      # cookie | official | gateway
+    cookie: ${XHS_COOKIE:}
+    sign-url: ${XHS_SIGN_URL:}                    # 本地签名服务，见 backend/scripts/xhs_sign_server.py
+    client-id: ${XHS_CLIENT_ID:}
+    client-secret: ${XHS_CLIENT_SECRET:}
+    api-key: ${XHS_API_KEY:}                      # gateway 模式 token
+    base-url: ${XHS_BASE_URL:https://open.xiaohongshu.com}
+    token-path: ${XHS_TOKEN_PATH:/oauth2/access_token}
+    search-path: ${XHS_SEARCH_PATH:/api/sns/v1/search/notes}
+    gateway-base-url: ${XHS_GATEWAY_BASE_URL:https://api.justoneapi.com}
+    gateway-search-path: ${XHS_GATEWAY_SEARCH_PATH:/api/xiaohongshu/search-note/v3}
+    timeout-ms: ${XHS_TIMEOUT_MS:60000}
+    opinion-filter-enabled: ${XHS_OPINION_FILTER_ENABLED:true}
+    min-recommend-confidence: ${XHS_MIN_RECOMMEND_CONFIDENCE:0.45}
+
+  food:
+    fallback-order: ${AGENT_FOOD_FALLBACK_ORDER:gaode,xhs,llm}
+    min-rating: ${FOOD_MIN_RATING:4.0}         # 餐厅最低评分要求
+    max-results: 5                             # 每天最多推荐餐厅数量
+
+  accommodation:
+    fallback-order: ${AGENT_ACCOMMODATION_FALLBACK_ORDER:gaode,llm}
+    min-rating: ${ACCOMMODATION_MIN_RATING:3.8}
+    max-results: 5
+
+# ============================================
+# 多智能体协作系统 (Multi-Agent Collaborative Intelligence)
+# ============================================
+multi-agent:
+  enabled: ${MULTI_AGENT_ENABLED:true}
+  streaming:
+    timeout-ms: ${MULTI_AGENT_STREAM_TIMEOUT:120000}
+  agents:
+    weather-analysis:
+      timeout-ms: 5000
+      retry-count: 1
+    poi-discovery:
+      timeout-ms: 60000
+      retry-count: 1
+    route-optimization:
+      timeout-ms: 5000
+      retry-count: 0
+    food-recommendation:
+      timeout-ms: 8000
+      retry-count: 1
+    accommodation-recommendation:
+      timeout-ms: 8000
+      retry-count: 1
+    day-scheduling:
+      timeout-ms: 3000
+      retry-count: 0
+    budget-planning:
+      timeout-ms: 3000
+      retry-count: 0
+    narrative-generation:
+      timeout-ms: 10000
+      retry-count: 1
+    safety-validation:
+      timeout-ms: 10000
+      retry-count: 1
+  debate:
+    enabled: ${MULTI_AGENT_DEBATE_ENABLED:true}
+    max-rounds: 2
+    consensus-threshold: 0.5
+
+# ============================================
+# Actuator 健康检查
+# ============================================
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+# ============================================
+# 日志配置
+# ============================================
+logging:
+  level:
+    com.tourism: DEBUG
+    dev.langchain4j: INFO
+    io.milvus: WARN
+    org.springframework.web: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

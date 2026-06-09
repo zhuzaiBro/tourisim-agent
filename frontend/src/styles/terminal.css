@@ -1,0 +1,205 @@
+/* ── Terminal theme utilities ───────────────────────────── */
+
+@keyframes term-cursor-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+@keyframes term-scanline {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+
+/* Subtle CRT scanline overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.03) 2px,
+    rgba(0, 0, 0, 0.03) 4px
+  );
+  opacity: 0.4;
+}
+
+/* Terminal window chrome */
+.term-window-dots {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.term-window-dots .dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+
+.term-window-dots .dot.red    { background: #ff5f57; }
+.term-window-dots .dot.yellow { background: #febc2e; }
+.term-window-dots .dot.green  { background: #28c840; }
+
+.term-prompt {
+  color: var(--term-green);
+  font-weight: 600;
+  user-select: none;
+}
+
+.term-prompt-dim {
+  color: var(--text-3);
+}
+
+.term-comment {
+  color: var(--text-3);
+  font-style: normal;
+}
+
+.term-comment::before {
+  content: '# ';
+  color: var(--forest-400);
+}
+
+.term-cursor {
+  display: inline-block;
+  width: 8px;
+  height: 1.1em;
+  background: var(--term-green);
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  animation: term-cursor-blink 1s step-end infinite;
+}
+
+.term-green  { color: var(--term-green); }
+.term-amber  { color: var(--term-amber); }
+.term-burgundy { color: var(--forest-400); }
+
+/* Terminal panel frame */
+.term-panel {
+  background: var(--white);
+  border: 1px solid var(--cream-300);
+  border-radius: var(--radius);
+  box-shadow: inset 0 0 0 1px rgba(137, 57, 77, 0.08);
+}
+
+.term-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--cream-200);
+  border-bottom: 1px solid var(--cream-300);
+  font-size: 11px;
+  color: var(--text-3);
+  letter-spacing: 0.04em;
+}
+
+/* Global input terminal style */
+input:not([type="checkbox"]):not([type="radio"]),
+textarea,
+select {
+  font-family: inherit !important;
+  background: var(--cream-200) !important;
+  border-color: var(--cream-300) !important;
+  color: var(--text) !important;
+  border-radius: var(--radius) !important;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--forest) !important;
+  box-shadow: 0 0 0 2px rgba(137, 57, 77, 0.25) !important;
+  outline: none !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-3) !important;
+}
+
+/* Element Plus dark terminal overrides */
+.el-button {
+  font-family: inherit !important;
+  border-radius: var(--radius) !important;
+}
+
+.el-input__wrapper,
+.el-textarea__inner,
+.el-select__wrapper {
+  background: var(--cream-200) !important;
+  border-color: var(--cream-300) !important;
+  box-shadow: none !important;
+  color: var(--text) !important;
+}
+
+.el-dialog {
+  background: var(--white) !important;
+  border: 1px solid var(--cream-300) !important;
+  border-radius: var(--radius-lg) !important;
+}
+
+.el-dialog__title {
+  color: var(--text) !important;
+  font-family: inherit !important;
+}
+
+.el-message-box {
+  background: var(--white) !important;
+  border: 1px solid var(--cream-300) !important;
+}
+
+.el-dropdown-menu,
+.el-popper.is-light {
+  background: var(--white) !important;
+  border: 1px solid var(--cream-300) !important;
+}
+
+.el-dropdown-menu__item {
+  color: var(--text-2) !important;
+}
+
+.el-dropdown-menu__item:hover {
+  background: rgba(137, 57, 77, 0.12) !important;
+  color: var(--text) !important;
+}
+
+.el-tag {
+  font-family: inherit !important;
+}
+
+/* Selection */
+::selection {
+  background: rgba(137, 57, 77, 0.45);
+  color: var(--text-on-theme);
+}
+
+/* Shared sidebar terminal chrome */
+.sidebar {
+  background: linear-gradient(180deg, #1a1014 0%, #120c0f 100%) !important;
+  border-right: 2px solid var(--forest) !important;
+  box-shadow: inset -1px 0 0 rgba(137, 57, 77, 0.3);
+}
+
+.sb-brand .sb-prompt,
+.sb-prompt {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-on-theme);
+}
+
+.sb-gem,
+.sb-name-en { display: none; }
+
+.sb-name {
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  color: var(--text-on-theme) !important;
+  font-family: inherit !important;
+  font-style: normal !important;
+}
