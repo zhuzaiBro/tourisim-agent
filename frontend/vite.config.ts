@@ -5,8 +5,8 @@ import { resolve } from 'path'
 export default defineConfig({
   plugins: [vue()],
 
-  // 与后端共用项目根目录 .env（VITE_AMAP_KEY 等）
-  envDir: resolve(__dirname, '..'),
+  // Vercel 仅部署 frontend/；本地 monorepo 可读上级 .env
+  envDir: resolve(__dirname, process.env.VERCEL ? '.' : '..'),
 
   resolve: {
     alias: {
