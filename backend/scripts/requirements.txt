@@ -1,0 +1,2 @@
+# 小红书 Cookie 模式签名（xhs_sign_server.py / xhs_sign_once.py）
+xhshow>=0.1.0
