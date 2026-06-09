@@ -16,6 +16,8 @@ APP_LOG="$LOG_DIR/app.log"
 XHS_LOG="$LOG_DIR/xhs-sign.log"
 
 JAVA_MIN=21
+# 宝塔 JDK 21 默认路径（.env 中 JAVA_BIN 可覆盖）
+BT_JAVA_DEFAULT="/www/server/java/jdk-21.0.2/bin/java"
 BACKEND_PORT="${BACKEND_PORT:-8080}"
 XHS_SIGN_PORT="${XHS_SIGN_PORT:-8765}"
 JAVA_OPTS="${JAVA_OPTS:--Xms512m -Xmx1024m -XX:+UseG1GC}"
@@ -59,13 +61,26 @@ load_env() {
 }
 
 resolve_java() {
-  local java_bin="${JAVA_BIN:-java}"
-  if ! command -v "$java_bin" >/dev/null 2>&1; then
-    die "找不到 Java: $java_bin（可在 .env 设置 JAVA_BIN）"
+  local java_bin
+  if [[ -n "${JAVA_BIN:-}" ]]; then
+    java_bin="$JAVA_BIN"
+  elif [[ -x "$BT_JAVA_DEFAULT" ]]; then
+    java_bin="$BT_JAVA_DEFAULT"
+  else
+    java_bin="java"
+  fi
+  if [[ ! -x "$java_bin" ]] && ! command -v "$java_bin" >/dev/null 2>&1; then
+    die "找不到 Java: $java_bin（可在 .env 设置 JAVA_BIN=$BT_JAVA_DEFAULT）"
   fi
   "$java_bin" -version 2>&1 | grep -qE 'version "(2[1-9]|[3-9][0-9])' \
     || die "需要 JDK $JAVA_MIN+，当前: $("$java_bin" -version 2>&1 | head -1)"
   echo "$java_bin"
+}
+
+export_java_home() {
+  local java_bin="$1"
+  export JAVA_HOME="${JAVA_HOME:-$(cd "$(dirname "$java_bin")/.." && pwd)}"
+  export PATH="$JAVA_HOME/bin:$PATH"
 }
 
 find_jar() {
@@ -198,10 +213,12 @@ status_app() {
 
 redeploy_app() {
   load_env
+  local java_bin
+  java_bin="$(resolve_java)"
+  export_java_home "$java_bin"
   command -v "$MVN" >/dev/null 2>&1 || die "未找到 Maven ($MVN)，请先安装或在 .env 设置 MVN 路径"
-  resolve_java >/dev/null
 
-  echo ">>> 编译打包 (跳过测试)..."
+  echo ">>> 编译打包 (跳过测试, JAVA_HOME=$JAVA_HOME)..."
   cd "$APP_HOME"
   "$MVN" clean package -DskipTests
 
