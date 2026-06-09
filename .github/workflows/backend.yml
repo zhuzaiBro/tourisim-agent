@@ -1,0 +1,137 @@
+# 后端 CI/CD（前端由 Vercel 托管，本流水线仅处理 backend/）
+#
+# 所需 GitHub Secrets（Settings → Secrets and variables → Actions）:
+#   DEPLOY_SSH_KEY   服务器 SSH 私钥（对应已加入 authorized_keys 的公钥）
+#   DEPLOY_HOST      例: biz.zood.work
+# 可选 Secrets:
+#   DEPLOY_USER      默认 root
+#   DEPLOY_PATH      默认 /www/wwwroot/tourisim-agent
+#   DEPLOY_PORT      默认 22
+#   HEALTH_URL       默认 https://tourisim-api.zood.work/api/cities
+
+name: Backend CI/CD
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend.yml'
+  pull_request:
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: backend-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  JAVA_VERSION: '21'
+
+jobs:
+  build:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: temurin
+          cache: maven
+
+      - name: Test
+        working-directory: backend
+        run: mvn -B test
+
+      - name: Package
+        working-directory: backend
+        run: mvn -B package -DskipTests
+
+      - name: Resolve jar path
+        id: jar
+        working-directory: backend
+        run: |
+          JAR="$(ls target/tourism-rag-*.jar | grep -v '\.original$' | head -1)"
+          [[ -n "$JAR" ]] || (echo "未找到可部署 jar" && exit 1)
+          echo "file=$JAR" >> "$GITHUB_OUTPUT"
+
+      - name: Upload jar artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tourism-rag-jar
+          path: backend/${{ steps.jar.outputs.file }}
+          if-no-files-found: error
+          retention-days: 14
+
+  deploy:
+    name: Deploy to Server
+    needs: build
+    if: >
+      (github.event_name == 'push' && github.ref == 'refs/heads/main')
+      || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Download jar
+        uses: actions/download-artifact@v4
+        with:
+          name: tourism-rag-jar
+          path: artifact
+
+      - name: Setup SSH
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+        run: |
+          if [[ -z "${DEPLOY_SSH_KEY:-}" || -z "${DEPLOY_HOST:-}" ]]; then
+            echo "缺少 DEPLOY_SSH_KEY 或 DEPLOY_HOST，请在 GitHub Secrets 中配置"
+            exit 1
+          fi
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          PORT="${DEPLOY_PORT:-22}"
+          ssh-keyscan -p "$PORT" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: Upload jar & restart
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+        run: |
+          DEPLOY_USER="${DEPLOY_USER:-root}"
+          DEPLOY_PATH="${DEPLOY_PATH:-/www/wwwroot/tourisim-agent}"
+          DEPLOY_PORT="${DEPLOY_PORT:-22}"
+          JAR_FILE="$(ls artifact/*.jar | grep -v '\.original$' | head -1)"
+          REMOTE="${DEPLOY_USER}@${DEPLOY_HOST}"
+          SSH_OPTS=(-i ~/.ssh/deploy_key -p "$DEPLOY_PORT" -o StrictHostKeyChecking=accept-new)
+
+          ssh "${SSH_OPTS[@]}" "$REMOTE" "mkdir -p ${DEPLOY_PATH}/backend/target"
+          scp "${SSH_OPTS[@]}" "$JAR_FILE" "$REMOTE:${DEPLOY_PATH}/backend/target/"
+
+          ssh "${SSH_OPTS[@]}" "$REMOTE" "cd ${DEPLOY_PATH}/backend && chmod +x app.sh && ./app.sh deploy"
+
+      - name: Health check
+        env:
+          HEALTH_URL: ${{ secrets.HEALTH_URL }}
+        run: |
+          URL="${HEALTH_URL:-https://tourisim-api.zood.work/api/cities}"
+          for i in $(seq 1 30); do
+            if curl -sf "$URL" >/dev/null; then
+              echo "健康检查通过: $URL"
+              exit 0
+            fi
+            echo "等待后端就绪 ($i/30)..."
+            sleep 5
+          done
+          echo "健康检查超时: $URL"
+          exit 1

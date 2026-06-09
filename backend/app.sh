@@ -33,6 +33,7 @@ TourismRAG 后端管理脚本
   stop      停止 Java 后端
   restart   先 stop 再 start
   redeploy  打包并 restart；无 Maven 时可设 DEPLOY_SKIP_BUILD=true 仅重启 jar
+  deploy    CI/CD 上传 jar 后调用（等同 restart）
   status    查看运行状态
 
 环境:
@@ -252,6 +253,7 @@ case "$cmd" in
   stop) stop_app ;;
   restart) stop_app; start_app ;;
   redeploy) redeploy_app ;;
+  deploy) stop_app; start_app ;;
   status) status_app ;;
   -h|--help|help) usage ;;
   *)
