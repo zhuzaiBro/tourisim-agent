@@ -47,7 +47,7 @@
           <router-link to="/register" class="form-nav-link">还没账号？注册</router-link>
         </div>
 
-        <div class="form-body">
+        <div class="form-body glass shell-card-in">
           <h2 class="form-title"><span class="term-green">$</span> auth login</h2>
           <p class="form-sub term-comment">登录账号，继续规划旅程</p>
 
@@ -142,11 +142,11 @@ async function handleLogin() {
 .visual-panel {
   position: relative;
   flex: 0 0 50%;
-  background: #0a0a0f;
+  background: var(--bg-primary);
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  border-right: 2px solid var(--forest);
+  border-right: 1px solid var(--glass-border);
 }
 
 @media (max-width: 768px) {
@@ -176,10 +176,11 @@ async function handleLogin() {
 .vp-terminal {
   width: 100%;
   max-width: 520px;
-  border: 1px solid var(--cream-300);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow-md);
+  backdrop-filter: blur(10px);
 }
 
 .vp-term-bar {
@@ -205,7 +206,7 @@ async function handleLogin() {
 }
 
 .vp-term-output { color: var(--text-2); padding-left: 0; }
-.vp-term-dim { color: var(--forest-400); font-size: 12px; }
+.vp-term-dim { color: var(--accent-cyan); font-size: 12px; }
 
 /* ── Form Panel ─────────────────────────────────────── */
 .form-panel {
@@ -239,12 +240,12 @@ async function handleLogin() {
 }
 
 .form-nav-link:hover {
-  color: var(--forest);
-  border-color: var(--forest);
+  color: var(--accent-cyan);
+  border-color: var(--accent-cyan);
 }
 
 .form-body {
-  max-width: 380px;
+  max-width: 400px;
   width: 100%;
   margin: 0 auto;
   display: flex;
@@ -252,6 +253,7 @@ async function handleLogin() {
   justify-content: center;
   flex: 1;
   gap: 8px;
+  padding: 32px 28px;
 }
 
 .form-title {
@@ -300,7 +302,7 @@ async function handleLogin() {
   transition: color 0.2s;
 }
 
-.f-hint-link:hover { color: var(--earth); }
+.f-hint-link:hover { color: var(--accent-cyan); }
 
 .f-input {
   width: 100%;
@@ -319,17 +321,17 @@ async function handleLogin() {
 .f-input::placeholder { color: var(--text-3); }
 
 .f-input:focus {
-  border-color: var(--forest);
-  box-shadow: 0 0 0 3px rgba(var(--forest-rgb),0.08);
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 0 3px rgba(var(--accent-cyan-rgb), 0.15);
 }
 
 .f-btn-primary {
   width: 100%;
   height: 42px;
-  background: var(--forest);
-  color: var(--text-on-theme);
-  border: 1px solid var(--forest-400);
-  border-radius: var(--radius);
+  background: transparent;
+  color: var(--accent-green);
+  border: 1px solid var(--accent-green);
+  border-radius: var(--radius-lg);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -337,12 +339,14 @@ async function handleLogin() {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  transition: background 0.2s, transform 0.1s;
+  transition: var(--transition-smooth);
   margin-top: 4px;
 }
 
-.f-btn-primary:hover { background: var(--forest-600); }
-.f-btn-primary:active { transform: scale(0.99); }
+.f-btn-primary:hover {
+  background: rgba(var(--accent-green-rgb), 0.14);
+}
+.f-btn-primary:active { transform: scale(0.95); }
 
 .btn-arrow {
   font-size: 18px;
@@ -381,8 +385,8 @@ async function handleLogin() {
 }
 
 .f-btn-ghost:hover {
-  border-color: var(--forest);
-  color: var(--forest);
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
 }
 
 .form-register-link {
@@ -393,14 +397,17 @@ async function handleLogin() {
 }
 
 .form-register-link a {
-  color: var(--forest);
+  color: var(--accent-cyan);
   text-decoration: none;
   font-weight: 500;
   border-bottom: 1px solid transparent;
-  transition: border-color 0.2s;
+  transition: var(--transition-smooth);
 }
 
-.form-register-link a:hover { border-color: var(--forest); }
+.form-register-link a:hover {
+  color: var(--accent-green);
+  border-color: var(--accent-green);
+}
 
 .f-error {
   font-size: 12px;

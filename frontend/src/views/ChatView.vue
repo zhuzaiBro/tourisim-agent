@@ -401,12 +401,9 @@ const vClickOutside = {
 .sidebar {
   width: 260px;
   flex-shrink: 0;
-  background: linear-gradient(180deg, #1a1014 0%, #120c0f 100%);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border-right: 2px solid var(--forest);
-  box-shadow: inset -1px 0 0 rgba(137, 57, 77, 0.3);
 }
 
 .sb-brand {
@@ -414,9 +411,9 @@ const vClickOutside = {
   align-items: center;
   gap: 10px;
   padding: 14px 16px;
-  border-bottom: 1px solid rgba(137, 57, 77, 0.4);
+  border-bottom: 1px solid var(--border-light);
   flex-shrink: 0;
-  background: rgba(0, 0, 0, 0.25);
+  background: rgba(0, 0, 0, 0.2);
 }
 
 .sb-prompt {
@@ -435,7 +432,7 @@ const vClickOutside = {
 .sb-section-label {
   font-size: 11px;
   letter-spacing: 0.04em;
-  color: var(--forest-400);
+  color: var(--accent-cyan);
   margin-bottom: 10px;
 }
 
@@ -449,22 +446,22 @@ const vClickOutside = {
   font-size: 11px;
   padding: 3px 8px;
   border-radius: var(--radius);
-  border: 1px solid rgba(137, 57, 77, 0.5);
+  border: 1px solid var(--border-light);
   background: rgba(0, 0, 0, 0.2);
-  color: rgba(250, 246, 240, 0.55);
+  color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.15s;
+  transition: var(--transition-smooth);
 }
 
 .sb-cat-btn:hover {
-  border-color: var(--forest-400);
-  color: var(--term-green);
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
 }
 
 .sb-cat-btn.active {
-  background: rgba(137, 57, 77, 0.35);
-  border-color: var(--term-green);
-  color: var(--term-green);
+  background: rgba(var(--accent-green-rgb), 0.12);
+  border-color: var(--accent-green);
+  color: var(--accent-green);
   font-weight: 600;
 }
 
@@ -673,14 +670,15 @@ const vClickOutside = {
 .main-header {
   height: 44px;
   flex-shrink: 0;
-  background: var(--cream-200);
-  border-bottom: 1px solid var(--cream-300);
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--glass-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 16px;
   gap: 12px;
-  box-shadow: inset 0 -1px 0 rgba(137, 57, 77, 0.15);
 }
 
 .mh-left {
@@ -704,9 +702,9 @@ const vClickOutside = {
   align-items: center;
   gap: 4px;
   padding: 2px 8px 2px 10px;
-  background: rgba(137, 57, 77, 0.25);
-  color: var(--term-green);
-  border: 1px solid var(--forest);
+  background: rgba(var(--accent-green-rgb), 0.1);
+  color: var(--accent-green);
+  border: 1px solid rgba(var(--accent-green-rgb), 0.35);
   border-radius: var(--radius);
   font-size: 11px;
   font-weight: 500;

@@ -1,16 +1,10 @@
-/* ── Terminal theme utilities ───────────────────────────── */
+/* ── Terminal theme utilities (UI.md) ─────────────────── */
 
 @keyframes term-cursor-blink {
   0%, 49% { opacity: 1; }
   50%, 100% { opacity: 0; }
 }
 
-@keyframes term-scanline {
-  0% { transform: translateY(-100%); }
-  100% { transform: translateY(100vh); }
-}
-
-/* Subtle CRT scanline overlay */
 body::before {
   content: '';
   position: fixed;
@@ -21,13 +15,12 @@ body::before {
     0deg,
     transparent,
     transparent 2px,
-    rgba(0, 0, 0, 0.03) 2px,
-    rgba(0, 0, 0, 0.03) 4px
+    rgba(0, 0, 0, 0.02) 2px,
+    rgba(0, 0, 0, 0.02) 4px
   );
-  opacity: 0.4;
+  opacity: 0.35;
 }
 
-/* Terminal window chrome */
 .term-window-dots {
   display: flex;
   align-items: center;
@@ -46,7 +39,7 @@ body::before {
 .term-window-dots .dot.green  { background: #28c840; }
 
 .term-prompt {
-  color: var(--term-green);
+  color: var(--accent-green);
   font-weight: 600;
   user-select: none;
 }
@@ -62,29 +55,30 @@ body::before {
 
 .term-comment::before {
   content: '# ';
-  color: var(--forest-400);
+  color: var(--accent-cyan);
 }
 
 .term-cursor {
   display: inline-block;
   width: 8px;
   height: 1.1em;
-  background: var(--term-green);
+  background: var(--accent-green);
   margin-left: 2px;
   vertical-align: text-bottom;
   animation: term-cursor-blink 1s step-end infinite;
 }
 
-.term-green  { color: var(--term-green); }
-.term-amber  { color: var(--term-amber); }
-.term-burgundy { color: var(--forest-400); }
+.term-green  { color: var(--accent-green); }
+.term-amber  { color: var(--accent-cyan); }
+.term-burgundy { color: var(--accent-cyan); }
 
-/* Terminal panel frame */
 .term-panel {
-  background: var(--white);
-  border: 1px solid var(--cream-300);
-  border-radius: var(--radius);
-  box-shadow: inset 0 0 0 1px rgba(137, 57, 77, 0.08);
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
 }
 
 .term-panel-header {
@@ -92,30 +86,35 @@ body::before {
   align-items: center;
   gap: 10px;
   padding: 8px 12px;
-  background: var(--cream-200);
-  border-bottom: 1px solid var(--cream-300);
+  background: rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid var(--border-light);
   font-size: 11px;
   color: var(--text-3);
   letter-spacing: 0.04em;
 }
 
-/* Global input terminal style */
 input:not([type="checkbox"]):not([type="radio"]),
 textarea,
 select {
   font-family: inherit !important;
-  background: var(--cream-200) !important;
-  border-color: var(--cream-300) !important;
+  background: rgba(36, 45, 74, 0.6) !important;
+  border-color: var(--border-light) !important;
   color: var(--text) !important;
   border-radius: var(--radius) !important;
+  transition: var(--transition-smooth) !important;
 }
 
 input:focus,
 textarea:focus,
 select:focus {
-  border-color: var(--forest) !important;
-  box-shadow: 0 0 0 2px rgba(137, 57, 77, 0.25) !important;
+  border-color: var(--accent-cyan) !important;
+  box-shadow: 0 0 0 2px rgba(var(--accent-cyan-rgb), 0.2) !important;
   outline: none !important;
+}
+
+input:focus + .term-cursor,
+.f-input:focus {
+  border-color: var(--accent-cyan) !important;
 }
 
 input::placeholder,
@@ -123,41 +122,53 @@ textarea::placeholder {
   color: var(--text-3) !important;
 }
 
-/* Element Plus dark terminal overrides */
 .el-button {
   font-family: inherit !important;
-  border-radius: var(--radius) !important;
+  border-radius: var(--radius-lg) !important;
+  transition: var(--transition-smooth) !important;
+}
+
+.el-button:active {
+  transform: scale(0.95);
 }
 
 .el-input__wrapper,
 .el-textarea__inner,
 .el-select__wrapper {
-  background: var(--cream-200) !important;
-  border-color: var(--cream-300) !important;
+  background: rgba(36, 45, 74, 0.55) !important;
+  border-color: var(--border-light) !important;
   box-shadow: none !important;
   color: var(--text) !important;
+  border-radius: var(--radius) !important;
+}
+
+.el-input__wrapper.is-focus,
+.el-textarea__inner:focus {
+  border-color: var(--accent-cyan) !important;
+  box-shadow: 0 0 0 2px rgba(var(--accent-cyan-rgb), 0.18) !important;
 }
 
 .el-dialog {
-  background: var(--white) !important;
-  border: 1px solid var(--cream-300) !important;
+  background: var(--glass-bg) !important;
+  backdrop-filter: blur(12px) !important;
+  border: 1px solid var(--glass-border) !important;
   border-radius: var(--radius-lg) !important;
 }
 
 .el-dialog__title {
   color: var(--text) !important;
-  font-family: inherit !important;
+  font-family: 'JetBrains Mono', monospace !important;
 }
 
 .el-message-box {
-  background: var(--white) !important;
-  border: 1px solid var(--cream-300) !important;
+  background: var(--bg-secondary) !important;
+  border: 1px solid var(--border-light) !important;
 }
 
 .el-dropdown-menu,
 .el-popper.is-light {
-  background: var(--white) !important;
-  border: 1px solid var(--cream-300) !important;
+  background: var(--bg-secondary) !important;
+  border: 1px solid var(--border-light) !important;
 }
 
 .el-dropdown-menu__item {
@@ -165,25 +176,29 @@ textarea::placeholder {
 }
 
 .el-dropdown-menu__item:hover {
-  background: rgba(137, 57, 77, 0.12) !important;
-  color: var(--text) !important;
+  background: rgba(var(--accent-cyan-rgb), 0.12) !important;
+  color: var(--accent-cyan) !important;
 }
 
 .el-tag {
-  font-family: inherit !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  border-radius: 6px !important;
 }
 
-/* Selection */
 ::selection {
-  background: rgba(137, 57, 77, 0.45);
-  color: var(--text-on-theme);
+  background: rgba(var(--accent-cyan-rgb), 0.35);
+  color: var(--text-primary);
 }
 
-/* Shared sidebar terminal chrome */
 .sidebar {
-  background: linear-gradient(180deg, #1a1014 0%, #120c0f 100%) !important;
-  border-right: 2px solid var(--forest) !important;
-  box-shadow: inset -1px 0 0 rgba(137, 57, 77, 0.3);
+  background: linear-gradient(
+    180deg,
+    rgba(26, 31, 58, 0.92) 0%,
+    rgba(10, 14, 39, 0.98) 100%
+  ) !important;
+  border-right: 1px solid var(--glass-border) !important;
+  box-shadow: inset -1px 0 0 rgba(var(--accent-cyan-rgb), 0.08);
+  backdrop-filter: blur(10px);
 }
 
 .sb-brand .sb-prompt,

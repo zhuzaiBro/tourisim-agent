@@ -1,0 +1,83 @@
+/* UI.md — Cyberpunk Terminal Elegance */
+
+@keyframes shell-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.glass,
+.glassmorphism {
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  transition: var(--transition-smooth);
+}
+
+.glass:hover,
+.glassmorphism:hover {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-color: var(--border-medium);
+}
+
+.shell-card-in {
+  animation: shell-card-in 0.3s ease-out;
+}
+
+.shell-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 16px;
+  height: 42px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent-green);
+  background: transparent;
+  border: 1px solid var(--accent-green);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.shell-btn:hover {
+  background: rgba(var(--accent-green-rgb), 0.12);
+  color: var(--accent-green);
+}
+
+.shell-btn:active {
+  transform: scale(0.95);
+  transition-duration: 0.16s;
+}
+
+.shell-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.shell-btn--fill {
+  background: rgba(var(--accent-green-rgb), 0.15);
+}
+
+.shell-btn--fill:hover {
+  background: rgba(var(--accent-green-rgb), 0.28);
+}
+
+.shell-link {
+  color: var(--accent-cyan);
+  text-decoration: none;
+  transition: var(--transition-smooth);
+}
+
+.shell-link:hover {
+  color: var(--accent-green);
+}

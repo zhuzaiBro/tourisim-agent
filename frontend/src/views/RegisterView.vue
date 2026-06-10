@@ -50,7 +50,7 @@
           <router-link to="/login" class="form-nav-link">已有账号？登录</router-link>
         </div>
 
-        <div class="form-body">
+        <div class="form-body glass shell-card-in">
           <h2 class="form-title"><span class="term-green">$</span> auth register</h2>
           <p class="form-sub term-comment">加入旅途，开始智能旅游规划</p>
 
@@ -467,19 +467,18 @@ async function handleRegister() {
 .f-btn-primary {
   width: 100%;
   height: 46px;
-  background: var(--forest);
-  color: #fff;
-  border: none;
-  border-radius: var(--radius);
-  font-family: 'DM Sans', 'PingFang SC', sans-serif;
+  background: transparent;
+  color: var(--accent-green);
+  border: 1px solid var(--accent-green);
+  border-radius: var(--radius-lg);
   font-size: 15px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  transition: background 0.2s, transform 0.1s, opacity 0.2s;
+  transition: var(--transition-smooth);
 }
 
 .f-btn-primary:disabled {
@@ -487,8 +486,10 @@ async function handleRegister() {
   cursor: not-allowed;
 }
 
-.f-btn-primary:not(:disabled):hover { background: var(--forest-600); }
-.f-btn-primary:not(:disabled):active { transform: scale(0.99); }
+.f-btn-primary:not(:disabled):hover {
+  background: rgba(var(--accent-green-rgb), 0.14);
+}
+.f-btn-primary:not(:disabled):active { transform: scale(0.95); }
 
 .btn-arrow {
   font-size: 18px;
